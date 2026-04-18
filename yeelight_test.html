@@ -64,6 +64,10 @@
     <button class="btn-off" onclick="cmdPower('off')">Выкл</button>
     <button class="btn-tog" onclick="cmd('toggle','[]')">Toggle</button>
   </div>
+  <div class="row" style="margin-top:8px;">
+    <button style="background:#ff9800;color:white;" onclick="cmd('stop_cf','[]')">⛔ Стоп мигание</button>
+    <button style="background:#9c27b0;color:white;" onclick="setNormal()">🔄 Сброс</button>
+  </div>
   <div id="status">Нажми кнопку — результат появится здесь</div>
 </div>
 
@@ -114,7 +118,7 @@
 </div>
 
 <script>
-const VERSION = '1.1.0';
+const VERSION = '1.1.1';
 document.getElementById('ver').textContent = 'v' + VERSION;
 
 let msgId = 1;
@@ -181,6 +185,12 @@ function setAlert() {
   setTimeout(() => cmd('set_ct_abx', '[6500,"sudden",0]'), 100);
   setTimeout(() => cmd('set_bright', '[100,"sudden",0]'), 200);
   setTimeout(() => cmd('start_cf', '[0,0,"500,2,6500,100,500,2,6500,10"]'), 400);
+}
+
+function setNormal() {
+  cmd('stop_cf', '[]');
+  setTimeout(() => cmd('set_ct_abx', '[4000,"smooth",800]'), 200);
+  setTimeout(() => cmd('set_bright', '[70,"smooth",800]'), 400);
 }
 
 function setBright() {

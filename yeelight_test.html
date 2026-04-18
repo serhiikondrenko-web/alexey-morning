@@ -112,21 +112,28 @@ function addLog(msg) {
   if (el.children.length > 20) el.removeChild(el.lastChild);
 }
 
-async function cmd(method, params_str) {
+function cmd(method, params_str) {
   const ip = getIP();
   const body = JSON.stringify({ id: msgId++, method, params: JSON.parse(params_str) }) + '\r\n';
   addLog('→ ' + method + ' ' + params_str);
   setStatus('Отправляю...', '');
-  try {
-    await fetch('http://' + ip + ':55443', {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: body
-    });
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', 'http://' + ip + ':55443', true);
+  xhr.timeout = 2000;
+  xhr.onloadend = function() {
     setStatus('Команда отправлена — смотри на лампу', 'ok');
     addLog('← OK');
-  } catch(e) {
+  };
+  xhr.onerror = function() {
+    // no-cors: onerror fires even on success — check lamp anyway
+    setStatus('Отправлено (no-cors) — смотри на лампу', 'ok');
+    addLog('← sent (no-cors)');
+  };
+  xhr.ontimeout = function() {
+    setStatus('Отправлено (таймаут норм) — смотри на лампу', 'ok');
+    addLog('← timeout (ok)');
+  };
+  try { xhr.send(body); } catch(e) {
     setStatus('Ошибка: ' + e.message, 'err');
     addLog('← ERR: ' + e.message);
   }

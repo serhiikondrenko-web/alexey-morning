@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yeelight W3 Тест</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: sans-serif; background: #f5f5f5; color: #222; padding: 20px; max-width: 480px; margin: 0 auto; }
+  h1 { font-size: 20px; font-weight: 600; margin-bottom: 20px; }
+  .card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  label { font-size: 13px; color: #888; display: block; margin-bottom: 6px; }
+  input[type=text] { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; font-family: monospace; }
+  .row { display: flex; gap: 8px; margin-top: 8px; }
+  button { flex: 1; padding: 12px; border: none; border-radius: 10px; font-size: 15px; cursor: pointer; background: #eee; color: #333; transition: background 0.15s, transform 0.1s; }
+  button:active { transform: scale(0.97); }
+  .btn-on  { background: #4CAF50; color: white; }
+  .btn-off { background: #f44336; color: white; }
+  .btn-tog { background: #2196F3; color: white; }
+  .scene { width: 100%; padding: 16px; border: none; border-radius: 10px; font-size: 15px; cursor: pointer; text-align: left; margin-bottom: 10px; transition: transform 0.1s; }
+  .scene:active { transform: scale(0.98); }
+  .scene-warm    { background: #FFF3CD; color: #7A5C00; }
+  .scene-neutral { background: #E3F2FD; color: #0D47A1; }
+  .scene-alert   { background: #FFEBEE; color: #B71C1C; }
+  .scene-title { font-weight: 600; font-size: 15px; }
+  .scene-sub   { font-size: 12px; opacity: 0.7; margin-top: 2px; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+  input[type=range] { flex: 1; }
+  .val { font-size: 14px; min-width: 52px; text-align: right; color: #555; }
+  #status { font-size: 13px; margin-top: 8px; padding: 8px 12px; border-radius: 8px; background: #f0f0f0; min-height: 36px; }
+  .ok   { background: #E8F5E9; color: #2E7D32; }
+  .err  { background: #FFEBEE; color: #C62828; }
+  #log  { font-family: monospace; font-size: 11px; color: #888; max-height: 100px; overflow-y: auto; margin-top: 8px; }
+  .log-line { padding: 1px 0; border-bottom: 1px solid #f0f0f0; }
+</style>
+</head>
+<body>
+
+<h1>🔦 Yeelight W3 Тест</h1>
+
+<div class="card">
+  <label>IP адрес лампы</label>
+  <input type="text" id="ip" value="192.168.1.209" />
+  <div class="row">
+    <button class="btn-on"  onclick="cmdPower('on')">Вкл</button>
+    <button class="btn-off" onclick="cmdPower('off')">Выкл</button>
+    <button class="btn-tog" onclick="cmd('toggle','[]')">Toggle</button>
+  </div>
+  <div id="status">Нажми кнопку — результат появится здесь</div>
+</div>
+
+<div class="card">
+  <label>Сцены оболочки</label>
+  <button class="scene scene-warm" onclick="setWarm()">
+    <div class="scene-title">🌅 Утро — пробуждение</div>
+    <div class="scene-sub">2700K · 30% · плавно</div>
+  </button>
+  <button class="scene scene-neutral" onclick="setNeutral()">
+    <div class="scene-title">⚡ Активный шаг</div>
+    <div class="scene-sub">4500K · 80% · плавно</div>
+  </button>
+  <button class="scene scene-alert" onclick="setAlert()">
+    <div class="scene-title">🚨 Просрочка!</div>
+    <div class="scene-sub">6500K · 100% · мигание</div>
+  </button>
+</div>
+
+<div class="card">
+  <label>Яркость</label>
+  <div class="slider-row">
+    <span style="font-size:12px;color:#aaa">1%</span>
+    <input type="range" id="bright" min="1" max="100" value="50" step="1"
+      oninput="document.getElementById('bval').textContent=this.value+'%'">
+    <span style="font-size:12px;color:#aaa">100%</span>
+    <span class="val" id="bval">50%</span>
+    <button style="flex:0;padding:10px 14px;" onclick="setBright()">OK</button>
+  </div>
+
+  <label style="margin-top:14px;">Температура цвета</label>
+  <div class="slider-row">
+    <span style="font-size:12px;color:#aaa">2700</span>
+    <input type="range" id="ct" min="2700" max="6500" value="4000" step="100"
+      oninput="document.getElementById('ctval').textContent=this.value+'K'">
+    <span style="font-size:12px;color:#aaa">6500</span>
+    <span class="val" id="ctval">4000K</span>
+    <button style="flex:0;padding:10px 14px;" onclick="setCT()">OK</button>
+  </div>
+</div>
+
+<div class="card">
+  <label>Лог команд</label>
+  <div id="log"></div>
+</div>
+
+<script>
+let msgId = 1;
+
+function getIP() { return document.getElementById('ip').value.trim(); }
+
+function setStatus(msg, type) {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = type || '';
+}
+
+function addLog(msg) {
+  const el = document.getElementById('log');
+  const d = document.createElement('div');
+  d.className = 'log-line';
+  d.textContent = new Date().toLocaleTimeString('ru') + ' ' + msg;
+  el.prepend(d);
+  if (el.children.length > 20) el.removeChild(el.lastChild);
+}
+
+async function cmd(method, params_str) {
+  const ip = getIP();
+  const body = JSON.stringify({ id: msgId++, method, params: JSON.parse(params_str) }) + '\r\n';
+  addLog('→ ' + method + ' ' + params_str);
+  setStatus('Отправляю...', '');
+  try {
+    await fetch('http://' + ip + ':55443', {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: body
+    });
+    setStatus('Команда отправлена — смотри на лампу', 'ok');
+    addLog('← OK');
+  } catch(e) {
+    setStatus('Ошибка: ' + e.message, 'err');
+    addLog('← ERR: ' + e.message);
+  }
+}
+
+function cmdPower(state) { cmd('set_power', '["' + state + '","smooth",500]'); }
+
+function setWarm() {
+  cmd('set_power', '["on","smooth",500]');
+  setTimeout(() => cmd('set_ct_abx', '[2700,"smooth",1000]'), 300);
+  setTimeout(() => cmd('set_bright', '[30,"smooth",1000]'), 600);
+}
+
+function setNeutral() {
+  cmd('set_power', '["on","smooth",500]');
+  setTimeout(() => cmd('set_ct_abx', '[4500,"smooth",800]'), 300);
+  setTimeout(() => cmd('set_bright', '[80,"smooth",800]'), 600);
+}
+
+function setAlert() {
+  cmd('set_power', '["on","sudden",0]');
+  setTimeout(() => cmd('set_ct_abx', '[6500,"sudden",0]'), 100);
+  setTimeout(() => cmd('set_bright', '[100,"sudden",0]'), 200);
+  setTimeout(() => {
+    cmd('start_cf', '[0,0,"500,2,6500,100,500,2,6500,10"]');
+  }, 400);
+}
+
+function setBright() {
+  const v = document.getElementById('bright').value;
+  cmd('set_bright', '[' + v + ',"smooth",500]');
+}
+
+function setCT() {
+  const v = document.getElementById('ct').value;
+  cmd('set_ct_abx', '[' + v + ',"smooth",500]');
+}
+</script>
+</body>
+</html>

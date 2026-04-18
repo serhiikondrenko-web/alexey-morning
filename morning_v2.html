@@ -169,6 +169,7 @@ canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
 
 .coin-fly{position:fixed;font-size:1.6rem;pointer-events:none;z-index:100;animation:cf .9s ease-out forwards;}
 @keyframes cf{0%{transform:translateY(0) scale(1);opacity:1;}100%{transform:translateY(-80px) scale(1.4);opacity:0;}}
+.version{position:fixed;bottom:6px;right:10px;font-size:.55rem;color:rgba(74,96,128,.5);z-index:10;pointer-events:none;letter-spacing:.04em;}
 </style>
 </head>
 <body>
@@ -300,7 +301,11 @@ canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
   </div>
 
 </div>
+<div class="version" id="versionBadge"></div>
 <script>
+const VERSION = '1.0.0';
+document.getElementById('versionBadge').textContent = 'v' + VERSION;
+
 // ════════════════════════════════════════════
 // CONFIG — редактируется через Google Sheets
 // ════════════════════════════════════════════

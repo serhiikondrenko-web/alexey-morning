@@ -55,6 +55,11 @@
 <body>
 
 <h1>🔦 Yeelight W3 Тест</h1>
+<div id="proto-warn" style="display:none;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#7a5c00;">
+  ⚠️ <b>HTTPS → Mixed Content блок.</b> Лампа не отвечает потому что страница открыта по HTTPS, а лампа — HTTP. Реши одним из способов:<br><br>
+  1. Fully Kiosk: <b>Settings → Advanced Web Settings → Allow Mixed Content → ON</b><br>
+  2. Chrome: адресная строка → 🔒 → Site settings → Insecure content → Allow
+</div>
 
 <div class="card">
   <label>IP адрес лампы</label>
@@ -118,8 +123,9 @@
 </div>
 
 <script>
-const VERSION = '1.1.1';
+const VERSION = '1.1.2';
 document.getElementById('ver').textContent = 'v' + VERSION;
+if (location.protocol === 'https:') document.getElementById('proto-warn').style.display = 'block';
 
 let msgId = 1;
 

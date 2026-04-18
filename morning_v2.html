@@ -485,7 +485,24 @@ function toggleLamp() {
   const badge = document.getElementById('lampBadge');
   badge.textContent = lampEnabled ? '💡' : '🔦';
   badge.className = 'badge b-lamp' + (lampEnabled ? '' : ' off');
-  lastLightScene = null; // force re-apply on re-enable
+  lastLightScene = null;
+  if (lampEnabled) reapplyLamp();
+}
+
+function reapplyLamp() {
+  const now = new Date();
+  const tMin = now.getHours() * 60 + now.getMinutes();
+  const remEv = Math.max(0, BEDTIME - tMin);
+  if (lastPhase === 'idle')         setLightScene((tMin<T_WAKE||tMin>=T_IDLE_NIGHT)?'off':'evening-calm');
+  else if (lastPhase === 'wake')    setLightScene('wake');
+  else if (lastPhase === 'steps')   setLightScene('step');
+  else if (lastPhase === 'exit')    setLightScene('exit');
+  else if (lastPhase === 'result')  setLightScene('result');
+  else if (lastPhase === 'evening') {
+    if (remEv <= 60)       setLightScene('evening-danger');
+    else if (remEv <= 120) setLightScene('evening-warn');
+    else                   setLightScene('evening-calm');
+  }
 }
 
 function yeelightCmd(method, params) {
@@ -860,7 +877,8 @@ function tick(){
     }
     // Lamp scene on phase change
     lastLightScene=null;
-    if(phase==='idle')   setLightScene('off');
+    // idle ночью — выключить; idle днём/вечером (выходной) — тёплый свет
+    if(phase==='idle')        setLightScene((tMin<T_WAKE||tMin>=T_IDLE_NIGHT)?'off':'evening-calm');
     else if(phase==='wake')   setLightScene('wake');
     else if(phase==='steps')  setLightScene('step');
     else if(phase==='exit')   setLightScene('exit');
